@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: kpi-tracker
+    runtime: node
+    buildCommand: npm install && npm run build && npm run db:push
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
