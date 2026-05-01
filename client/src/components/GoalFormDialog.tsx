@@ -17,10 +17,10 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { fetchCompanies, fetchDepartments, fetchTeams, fetchEmployees, createGoal, updateGoal } from "@/lib/api";
-import { insertGoalSchema } from "@shared/schema";
+import { insertGoalObjectSchema } from "@shared/schema";
 import type { Goal } from "@/lib/api";
 
-const formSchema = insertGoalSchema.extend({
+const formSchema = insertGoalObjectSchema.extend({
   targetValue: z.coerce.number().min(0),
   currentValue: z.coerce.number().min(0),
 });
@@ -225,7 +225,7 @@ export default function GoalFormDialog({ open, onClose, editGoal }: Props) {
               <FormField control={form.control} name="unitOfMeasure" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Unit</FormLabel>
-                  <FormControl><Input {...field} placeholder="e.g. USD" data-testid="input-unit" /></FormControl>
+                  <FormControl><Input {...field} value={field.value ?? ""} placeholder="e.g. USD" data-testid="input-unit" /></FormControl>
                 </FormItem>
               )} />
             </div>

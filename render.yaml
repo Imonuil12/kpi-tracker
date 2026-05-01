@@ -5,6 +5,8 @@ services:
     buildCommand: npm install && npm run build && npm run db:push
     startCommand: npm start
     envVars:
+      - key: DATABASE_URL
+        sync: false
       - key: NODE_ENV
         value: production
       - key: PORT

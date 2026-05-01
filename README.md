@@ -14,7 +14,7 @@ A full-stack web application for goal and KPI tracking across an organization. M
 - **Full CRUD** — Create, edit, and delete goals at any level via a form dialog
 - **Organization Tree** — Collapsible hierarchy view of companies, departments, teams, and employees with add/delete support
 - **Dark Mode** — Toggle in the sidebar footer
-- **Persistent Storage** — SQLite database via Drizzle ORM; data survives server restarts
+- **Persistent Storage** — PostgreSQL via Drizzle ORM
 
 ---
 
@@ -27,7 +27,7 @@ A full-stack web application for goal and KPI tracking across an organization. M
 | Data Fetching | TanStack Query v5 |
 | Forms | React Hook Form + Zod |
 | Backend | Node.js, Express |
-| Database | SQLite (better-sqlite3) + Drizzle ORM |
+| Database | PostgreSQL (`pg`) + Drizzle ORM |
 | Build Tool | Vite |
 | Hosting | Render (free tier) |
 
@@ -54,7 +54,7 @@ kpi-tracker/
 │   ├── index.ts             # Server entry point
 │   ├── routes.ts            # All API routes + seed data
 │   ├── storage.ts           # Database access layer (IStorage interface)
-│   └── db.ts                # Drizzle + SQLite connection
+│   └── db.ts                # Drizzle + PostgreSQL connection
 ├── shared/
 │   └── schema.ts            # Drizzle schema + Zod types (shared by front and back)
 ├── render.yaml              # Render deployment config
@@ -71,7 +71,7 @@ The schema mirrors the original ER diagram from Phase 1:
 - **Department** — belongs to a Company
 - **Team** — belongs to a Department
 - **Employee** — belongs to a Team
-- **Goal** — superclass with ISA subclasses (CompanyGoal, DepartmentGoal, TeamGoal, EmployeeGoal) collapsed into a single table with a `level` discriminator field
+- **Goal** — superclass table joined to ISA subclass tables `CompanyGoal`, `DepartmentGoal`, `TeamGoal`, and `EmployeeGoal`
 
 ---
 
@@ -85,17 +85,56 @@ The schema mirrors the original ER diagram from Phase 1:
 ### Setup
 
 ```bash
-# 1. Clone the repo
+# 1. Clone the repository
 git clone https://github.com/Imonuil12/kpi-tracker.git
 cd kpi-tracker
 
-# 2. Install dependencies
+# 2. Install project dependencies
 npm install
 
-# 3. Push the database schema (creates data.db locally)
+# 3. Start PostgreSQL locally
+# Make sure PostgreSQL is installed and running before creating the database.
+
+brew services start postgresql
+# If your PostgreSQL installation is versioned, you may need something like:
+brew services start postgresql@16
+
+# To stop postgres use
+brew services stop postgresql
+
+
+# 4. Create a local PostgreSQL database
+createdb -h localhost -p 5432 kpidb
+
+# 5. Verify that the database was created successfully
+psql -h localhost -p 5432 -d kpidb
+
+# If the connection works, you should see a prompt like:
+# kpidb=#
+#
+# To exit psql, run:
+# \q
+
+# 6. Set the PostgreSQL connection string
+# General format:
+export DATABASE_URL="postgres://USER:PASSWORD@HOST:5432/DB_NAME"
+
+# Local macOS example, if your PostgreSQL username is your macOS username
+# and you do not use a local database password:
+export DATABASE_URL="postgres://$(whoami)@localhost:5432/kpidb"
+
+# Alec's local example:
+# export DATABASE_URL="postgres://alecfishbach@localhost:5432/kpidb"
+
+# If your local PostgreSQL user has a password, use:
+# export DATABASE_URL="postgres://USER:PASSWORD@localhost:5432/kpidb"
+
+# 7. Push the database schema
 npm run db:push
 
-# 4. Start the dev server
+# This creates the required database tables.
+
+# 8. Start the development server
 npm run dev
 ```
 
@@ -110,7 +149,7 @@ The dev server runs Express (backend) and Vite (frontend with HMR) on the same p
 | `npm run dev` | Start development server with hot reload |
 | `npm run build` | Build frontend + bundle backend for production |
 | `npm run start` | Run the production build |
-| `npm run db:push` | Push schema changes to the SQLite database |
+| `npm run db:push` | Push schema changes to the PostgreSQL database |
 
 ---
 
@@ -120,9 +159,8 @@ The app is configured to auto-deploy on every push to `main` via `render.yaml`.
 
 **Build command:** `npm install && npm run build && npm run db:push`  
 **Start command:** `npm start`  
-**Environment variable:** `NODE_ENV=production`
+**Environment variables:** `NODE_ENV=production`, `DATABASE_URL=...`
 
-> ⚠️ Note: Render's free tier uses an ephemeral disk — the SQLite database resets on each new deploy. For persistent data across deploys, consider upgrading to a paid Render plan or migrating to a hosted PostgreSQL instance (e.g. [Neon](https://neon.tech) — free tier available).
 
 ---
 
@@ -142,7 +180,7 @@ Any merged PR to `main` will automatically trigger a redeploy on Render.
 
 | Phase | Status | Description |
 |---|---|---|
-| Phase 1 | ✅ Done | ER Diagram + Application Requirements |
-| Phase 2 | ✅ Done | Database schema, DDL, seed data, demo queries |
-| Phase 3 | 🚧 This app | Full-stack web prototype (React + Express + SQLite) |
-| Future | 📋 Planned | Auth/roles, PostgreSQL on AWS, Vercel frontend hosting |
+| Phase 1 | Complete | ER Diagram + Application Requirements |
+| Phase 2 | Complete | Database schema, DDL, seed data, demo queries |
+| Phase 3 | Complete | Full-stack web prototype (React + Express + PostgreSQL) |
+| Future | In progress | Present our prototype to potential users |

@@ -1,6 +1,15 @@
-import { drizzle } from "drizzle-orm/better-sqlite3";
-import Database from "better-sqlite3";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
 import * as schema from "@shared/schema";
 
-const sqlite = new Database("./data.db");
-export const db = drizzle(sqlite, { schema });
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+  throw new Error("DATABASE_URL is required to connect to PostgreSQL");
+}
+
+const pool = new Pool({
+  connectionString,
+});
+
+export const db = drizzle(pool, { schema });

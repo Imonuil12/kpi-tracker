@@ -1,44 +1,41 @@
 import type { Express } from "express";
-import { createServer, type Server } from "http";
+import type { Server } from "http";
 import { storage } from "./storage";
-import { db } from "./db";
 import {
-  company, department, team, employee, goal,
   insertGoalSchema, insertCompanySchema, insertDepartmentSchema,
   insertTeamSchema, insertEmployeeSchema,
 } from "@shared/schema";
-import { z } from "zod";
 
-function seedDatabase() {
-  const companies = storage.getCompanies();
+async function seedDatabase() {
+  const companies = await storage.getCompanies();
   if (companies.length > 0) return; // Already seeded
 
   // Companies
-  const acme = storage.createCompany({ name: "Acme Corp", mainAddress: "123 Acme Way, Metropolis" });
-  const globex = storage.createCompany({ name: "Globex", mainAddress: "456 Globex Road, Star City" });
+  const acme = await storage.createCompany({ name: "Acme Corp", mainAddress: "123 Acme Way, Metropolis" });
+  const globex = await storage.createCompany({ name: "Globex", mainAddress: "456 Globex Road, Star City" });
 
   // Departments
-  const eng = storage.createDepartment({ name: "Engineering", location: "Floor 2", companyID: acme.companyID });
-  const sales = storage.createDepartment({ name: "Sales", location: "Floor 1", companyID: acme.companyID });
-  const marketing = storage.createDepartment({ name: "Marketing", location: "Remote", companyID: globex.companyID });
+  const eng = await storage.createDepartment({ name: "Engineering", location: "Floor 2", companyID: acme.companyID });
+  const sales = await storage.createDepartment({ name: "Sales", location: "Floor 1", companyID: acme.companyID });
+  const marketing = await storage.createDepartment({ name: "Marketing", location: "Remote", companyID: globex.companyID });
 
   // Teams
-  const frontend = storage.createTeam({ name: "Frontend Team", depID: eng.depID });
-  const backend = storage.createTeam({ name: "Backend Team", depID: eng.depID });
-  const enterpriseSales = storage.createTeam({ name: "Enterprise Sales", depID: sales.depID });
-  const growth = storage.createTeam({ name: "Growth Marketing", depID: marketing.depID });
+  const frontend = await storage.createTeam({ name: "Frontend Team", depID: eng.depID });
+  const backend = await storage.createTeam({ name: "Backend Team", depID: eng.depID });
+  const enterpriseSales = await storage.createTeam({ name: "Enterprise Sales", depID: sales.depID });
+  const growth = await storage.createTeam({ name: "Growth Marketing", depID: marketing.depID });
 
   // Employees
-  storage.createEmployee({ firstName: "Alice", lastName: "Smith", email: "alice@acme.com", teamID: frontend.teamID });
-  storage.createEmployee({ firstName: "Bob", lastName: "Jones", email: "bob@acme.com", teamID: backend.teamID });
-  storage.createEmployee({ firstName: "Charlie", lastName: "Brown", email: "charlie@acme.com", teamID: enterpriseSales.teamID });
-  storage.createEmployee({ firstName: "Diana", lastName: "Prince", email: "diana@globex.com", teamID: growth.teamID });
-  storage.createEmployee({ firstName: "Evan", lastName: "Lee", email: "evan@acme.com", teamID: backend.teamID });
-  storage.createEmployee({ firstName: "Fiona", lastName: "Ward", email: "fiona@acme.com", teamID: frontend.teamID });
+  const alice = await storage.createEmployee({ firstName: "Alice", lastName: "Smith", email: "alice@acme.com", teamID: frontend.teamID });
+  const bob = await storage.createEmployee({ firstName: "Bob", lastName: "Jones", email: "bob@acme.com", teamID: backend.teamID });
+  const charlie = await storage.createEmployee({ firstName: "Charlie", lastName: "Brown", email: "charlie@acme.com", teamID: enterpriseSales.teamID });
+  await storage.createEmployee({ firstName: "Diana", lastName: "Prince", email: "diana@globex.com", teamID: growth.teamID });
+  await storage.createEmployee({ firstName: "Evan", lastName: "Lee", email: "evan@acme.com", teamID: backend.teamID });
+  await storage.createEmployee({ firstName: "Fiona", lastName: "Ward", email: "fiona@acme.com", teamID: frontend.teamID });
 
   // Goals
   // Company goals
-  storage.createGoal({
+  await storage.createGoal({
     name: "Increase Q3 Revenue",
     unitOfMeasure: "USD",
     status: "In Progress",
@@ -50,7 +47,7 @@ function seedDatabase() {
     companyID: acme.companyID,
     strategy: "Aggressive Market Expansion",
   });
-  storage.createGoal({
+  await storage.createGoal({
     name: "Expand to APAC Market",
     unitOfMeasure: "Percent",
     status: "Not Started",
@@ -64,7 +61,7 @@ function seedDatabase() {
   });
 
   // Department goals
-  storage.createGoal({
+  await storage.createGoal({
     name: "Launch New Product API",
     unitOfMeasure: "Percent",
     status: "On Track",
@@ -76,7 +73,7 @@ function seedDatabase() {
     depID: eng.depID,
     budget: 50000,
   });
-  storage.createGoal({
+  await storage.createGoal({
     name: "Close 50 Enterprise Accounts",
     unitOfMeasure: "Accounts",
     status: "Behind",
@@ -90,7 +87,7 @@ function seedDatabase() {
   });
 
   // Team goals
-  storage.createGoal({
+  await storage.createGoal({
     name: "Reduce Server Latency",
     unitOfMeasure: "Milliseconds",
     status: "Behind",
@@ -101,7 +98,7 @@ function seedDatabase() {
     level: "team",
     teamID: backend.teamID,
   });
-  storage.createGoal({
+  await storage.createGoal({
     name: "Close 10 Enterprise Deals",
     unitOfMeasure: "Deals",
     status: "In Progress",
@@ -112,7 +109,7 @@ function seedDatabase() {
     level: "team",
     teamID: enterpriseSales.teamID,
   });
-  storage.createGoal({
+  await storage.createGoal({
     name: "Improve Lighthouse Score",
     unitOfMeasure: "Score",
     status: "Achieved",
@@ -125,7 +122,7 @@ function seedDatabase() {
   });
 
   // Employee goals
-  storage.createGoal({
+  await storage.createGoal({
     name: "Complete Auth Migration",
     unitOfMeasure: "Features",
     status: "Not Started",
@@ -134,10 +131,10 @@ function seedDatabase() {
     startDate: "2026-04-01",
     endDate: "2026-04-30",
     level: "employee",
-    employeeID: 2, // Bob
+    employeeID: bob.employeeID,
     smartGoal: "Specific: Migrate all auth. Measurable: 5 components.",
   });
-  storage.createGoal({
+  await storage.createGoal({
     name: "Redesign UI Layout",
     unitOfMeasure: "Percent",
     status: "In Progress",
@@ -146,10 +143,10 @@ function seedDatabase() {
     startDate: "2026-03-01",
     endDate: "2026-05-31",
     level: "employee",
-    employeeID: 1, // Alice
+    employeeID: alice.employeeID,
     smartGoal: "Ensure new accessibility standards are met.",
   });
-  storage.createGoal({
+  await storage.createGoal({
     name: "Close 3 Deals This Quarter",
     unitOfMeasure: "Deals",
     status: "In Progress",
@@ -158,7 +155,7 @@ function seedDatabase() {
     startDate: "2026-04-01",
     endDate: "2026-06-30",
     level: "employee",
-    employeeID: 3, // Charlie
+    employeeID: charlie.employeeID,
     smartGoal: "Focus on Fortune 500 prospects in manufacturing sector.",
   });
 }
@@ -166,113 +163,113 @@ function seedDatabase() {
 export async function registerRoutes(httpServer: Server, app: Express) {
   // Seed on startup
   try {
-    seedDatabase();
+    await seedDatabase();
   } catch (e) {
     console.error("Seed error:", e);
   }
 
   // ====== Companies ======
-  app.get("/api/companies", (_req, res) => {
-    res.json(storage.getCompanies());
+  app.get("/api/companies", async (_req, res) => {
+    res.json(await storage.getCompanies());
   });
-  app.post("/api/companies", (req, res) => {
+  app.post("/api/companies", async (req, res) => {
     const parsed = insertCompanySchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
-    res.json(storage.createCompany(parsed.data));
+    res.json(await storage.createCompany(parsed.data));
   });
-  app.patch("/api/companies/:id", (req, res) => {
+  app.patch("/api/companies/:id", async (req, res) => {
     const id = parseInt(req.params.id);
-    const updated = storage.updateCompany(id, req.body);
+    const updated = await storage.updateCompany(id, req.body);
     if (!updated) return res.status(404).json({ error: "Not found" });
     res.json(updated);
   });
-  app.delete("/api/companies/:id", (req, res) => {
-    storage.deleteCompany(parseInt(req.params.id));
+  app.delete("/api/companies/:id", async (req, res) => {
+    await storage.deleteCompany(parseInt(req.params.id));
     res.json({ ok: true });
   });
 
   // ====== Departments ======
-  app.get("/api/departments", (_req, res) => {
-    res.json(storage.getDepartments());
+  app.get("/api/departments", async (_req, res) => {
+    res.json(await storage.getDepartments());
   });
-  app.post("/api/departments", (req, res) => {
+  app.post("/api/departments", async (req, res) => {
     const parsed = insertDepartmentSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
-    res.json(storage.createDepartment(parsed.data));
+    res.json(await storage.createDepartment(parsed.data));
   });
-  app.patch("/api/departments/:id", (req, res) => {
+  app.patch("/api/departments/:id", async (req, res) => {
     const id = parseInt(req.params.id);
-    const updated = storage.updateDepartment(id, req.body);
+    const updated = await storage.updateDepartment(id, req.body);
     if (!updated) return res.status(404).json({ error: "Not found" });
     res.json(updated);
   });
-  app.delete("/api/departments/:id", (req, res) => {
-    storage.deleteDepartment(parseInt(req.params.id));
+  app.delete("/api/departments/:id", async (req, res) => {
+    await storage.deleteDepartment(parseInt(req.params.id));
     res.json({ ok: true });
   });
 
   // ====== Teams ======
-  app.get("/api/teams", (_req, res) => {
-    res.json(storage.getTeams());
+  app.get("/api/teams", async (_req, res) => {
+    res.json(await storage.getTeams());
   });
-  app.post("/api/teams", (req, res) => {
+  app.post("/api/teams", async (req, res) => {
     const parsed = insertTeamSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
-    res.json(storage.createTeam(parsed.data));
+    res.json(await storage.createTeam(parsed.data));
   });
-  app.patch("/api/teams/:id", (req, res) => {
+  app.patch("/api/teams/:id", async (req, res) => {
     const id = parseInt(req.params.id);
-    const updated = storage.updateTeam(id, req.body);
+    const updated = await storage.updateTeam(id, req.body);
     if (!updated) return res.status(404).json({ error: "Not found" });
     res.json(updated);
   });
-  app.delete("/api/teams/:id", (req, res) => {
-    storage.deleteTeam(parseInt(req.params.id));
+  app.delete("/api/teams/:id", async (req, res) => {
+    await storage.deleteTeam(parseInt(req.params.id));
     res.json({ ok: true });
   });
 
   // ====== Employees ======
-  app.get("/api/employees", (_req, res) => {
-    res.json(storage.getEmployees());
+  app.get("/api/employees", async (_req, res) => {
+    res.json(await storage.getEmployees());
   });
-  app.post("/api/employees", (req, res) => {
+  app.post("/api/employees", async (req, res) => {
     const parsed = insertEmployeeSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
-    res.json(storage.createEmployee(parsed.data));
+    res.json(await storage.createEmployee(parsed.data));
   });
-  app.patch("/api/employees/:id", (req, res) => {
+  app.patch("/api/employees/:id", async (req, res) => {
     const id = parseInt(req.params.id);
-    const updated = storage.updateEmployee(id, req.body);
+    const updated = await storage.updateEmployee(id, req.body);
     if (!updated) return res.status(404).json({ error: "Not found" });
     res.json(updated);
   });
-  app.delete("/api/employees/:id", (req, res) => {
-    storage.deleteEmployee(parseInt(req.params.id));
+  app.delete("/api/employees/:id", async (req, res) => {
+    await storage.deleteEmployee(parseInt(req.params.id));
     res.json({ ok: true });
   });
 
   // ====== Goals ======
-  app.get("/api/goals", (_req, res) => {
-    res.json(storage.getGoals());
+  app.get("/api/goals", async (_req, res) => {
+    res.json(await storage.getGoals());
   });
-  app.get("/api/goals/:id", (req, res) => {
-    const g = storage.getGoal(parseInt(req.params.id));
+  app.get("/api/goals/:id", async (req, res) => {
+    const g = await storage.getGoal(parseInt(req.params.id));
     if (!g) return res.status(404).json({ error: "Not found" });
     res.json(g);
   });
-  app.post("/api/goals", (req, res) => {
+  app.post("/api/goals", async (req, res) => {
     const parsed = insertGoalSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
-    res.json(storage.createGoal(parsed.data));
+    res.json(await storage.createGoal(parsed.data));
   });
-  app.patch("/api/goals/:id", (req, res) => {
+  app.patch("/api/goals/:id", async (req, res) => {
     const id = parseInt(req.params.id);
-    const updated = storage.updateGoal(id, req.body);
+    const updated = await storage.updateGoal(id, req.body);
     if (!updated) return res.status(404).json({ error: "Not found" });
     res.json(updated);
   });
-  app.delete("/api/goals/:id", (req, res) => {
-    storage.deleteGoal(parseInt(req.params.id));
+  app.delete("/api/goals/:id", async (req, res) => {
+    await storage.deleteGoal(parseInt(req.params.id));
     res.json({ ok: true });
   });
 }
